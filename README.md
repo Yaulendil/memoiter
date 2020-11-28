@@ -28,7 +28,7 @@ fn main() {
     //      retrieved here.
     assert_eq!(fibonacci.get(3), Some(&2));
 
-    let (seq, _) = fibonacci.take();
+    let (seq, _) = fibonacci.consume();
     assert_eq!(seq, [0, 1, 1, 2, 3, 5, 8, 13, 21, 34]);
 }
 ```

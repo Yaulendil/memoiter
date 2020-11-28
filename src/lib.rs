@@ -36,7 +36,7 @@
 /// //      retrieved here.
 /// assert_eq!(fibonacci.get(3), Some(&2));
 ///
-/// let (seq, _) = fibonacci.take();
+/// let (seq, _) = fibonacci.consume();
 /// assert_eq!(seq, [0, 1, 1, 2, 3, 5, 8, 13, 21, 34]);
 /// ```
 #[derive(Debug)]
@@ -113,7 +113,7 @@ impl<I, T> MemoIter<I, T> where
 
     /// Consume self, returning a Tuple containing the internal stored `Vec<T>`
     ///     and the original Iterator.
-    pub fn take(self) -> (Vec<T>, I) {
+    pub fn consume(self) -> (Vec<T>, I) {
         let Self { sequence, iterator, .. } = self;
         (sequence, iterator)
     }
@@ -203,7 +203,7 @@ mod tests {
         println!("{:?}", &factorial);
 
         //  Ensure that it maintains its returns, in order.
-        let (seq, _) = factorial.take();
+        let (seq, _) = factorial.consume();
         assert_eq!(
             seq, [1, 1, 2, 6, 24, 120, 720],
             "MemoIter does not correctly store its past values.",
@@ -224,7 +224,7 @@ mod tests {
 
         println!("{:?}", &fibonacci);
 
-        let (seq, _) = fibonacci.take();
+        let (seq, _) = fibonacci.consume();
         assert_eq!(seq, [0, 1, 1, 2, 3, 5, 8, 13, 21, 34]);
     }
 

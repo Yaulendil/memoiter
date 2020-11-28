@@ -230,9 +230,12 @@ mod tests {
 
     #[test]
     fn test_len() {
-        assert_eq!(MemoIter::new(0..5).len(), 5);
-        assert_eq!(*MemoIter::new(0..=5).get(5).unwrap(), 5);
+        let mut five = MemoIter::new(0..5);
 
-        assert!(MemoIter::new(0..5).get(7).is_none());
+        assert_eq!(five.len(), 5);
+        assert_eq!(five.get(3), Some(&3));
+        assert_eq!(five.len(), 5);
+        assert_eq!(five.get(7), None);
+        assert_eq!(five.len(), 5);
     }
 }

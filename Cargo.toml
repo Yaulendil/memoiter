@@ -1,0 +1,8 @@
+[package]
+name = "memoiter"
+description = "Memoization of Iterators, so that their past results can be indexed."
+version = "1.0.0"
+authors = ["Yaulendil <davarice@protonmail.com>"]
+edition = "2018"
+
+[dependencies]

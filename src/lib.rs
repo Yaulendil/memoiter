@@ -103,6 +103,14 @@ impl<I, T> MemoIter<I, T> where
         self.sequence.get(idx)
     }
 
+    /// Retrieve, by its index, a value returned by the Iterator. If the value
+    ///     at the index given has not yet been evaluated, it will **NOT** be
+    ///     evaluated now, and this method will return `None`.
+    pub fn recall(&mut self, idx: usize) -> Option<&T> {
+        #[cfg(test)] println!("recall({})", idx);
+        self.sequence.get(idx)
+    }
+
     /// Consume self, returning a Tuple containing the internal stored `Vec<T>`
     ///     and the original Iterator.
     pub fn take(self) -> (Vec<T>, I) {
@@ -180,6 +188,7 @@ mod tests {
 
         //  Ensure that it starts empty.
         assert_eq!(factorial.sequence, [], "MemoIter does not start empty.");
+        assert_eq!(factorial.recall(3), None);
 
         //  Ensure that its specific values are calculated correctly.
         assert_eq!(factorial.get(0), Some(&1)); // 0!
@@ -190,6 +199,7 @@ mod tests {
         assert_eq!(factorial.get(2), Some(&2)); // 2!
         assert_eq!(factorial.get(0), Some(&1)); // 0!
 
+        assert_eq!(factorial.recall(3), Some(&6));
         println!("{:?}", &factorial);
 
         //  Ensure that it maintains its returns, in order.

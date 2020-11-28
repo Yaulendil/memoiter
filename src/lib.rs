@@ -79,8 +79,8 @@ impl<I, T> MemoIter<I, T> where
             if idx >= len {
                 self.sequence.reserve(idx - len + 1);
 
-                for i in len..=idx {
-                    #[cfg(test)] println!("+ {}", i);
+                for _i in len..=idx {
+                    #[cfg(test)] println!("+ {}", _i);
 
                     match self.iterator.next() {
                         Some(next) => self.sequence.push(next),

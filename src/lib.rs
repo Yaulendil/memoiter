@@ -72,6 +72,13 @@ impl<I, T> MemoIter<I, T> where
         }
     }
 
+    /// Return the number of items evaluated. This value will be one more than
+    ///     the highest index available via `MemoIter::recall()`.
+    #[inline]
+    pub fn evaluated(&self) -> usize {
+        self.sequence.len()
+    }
+
     fn expand_to_contain(&mut self, idx: usize) {
         if !self.exhausted {
             let len: usize = self.sequence.len();
@@ -101,6 +108,13 @@ impl<I, T> MemoIter<I, T> where
         #[cfg(test)] println!("get({}):", idx);
         self.expand_to_contain(idx);
         self.sequence.get(idx)
+    }
+
+    /// Return `true` if the internal Iterator has been exhausted and is done
+    ///     returning new values.
+    #[inline]
+    pub fn is_exhausted(&self) -> bool {
+        self.exhausted
     }
 
     /// Retrieve, by its index, a value returned by the Iterator. If the value
@@ -232,10 +246,18 @@ mod tests {
     fn test_len() {
         let mut five = MemoIter::new(0..5);
 
+        assert!(!five.is_exhausted());
+        assert_eq!(five.evaluated(), 0);
         assert_eq!(five.len(), 5);
         assert_eq!(five.get(3), Some(&3));
+
+        assert!(!five.is_exhausted());
+        assert_eq!(five.evaluated(), 4);
         assert_eq!(five.len(), 5);
         assert_eq!(five.get(7), None);
+
+        assert!(five.is_exhausted());
+        assert_eq!(five.evaluated(), 5);
         assert_eq!(five.len(), 5);
     }
 }

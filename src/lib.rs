@@ -78,6 +78,16 @@ impl<I, T> MemoIter<I, T> where
         }
     }
 
+    /// Create a `MemoIter` wrapping a given Iterator, using a provided Vector
+    ///     for its storage.
+    pub fn with_vec(iterator: I, sequence: Vec<T>) -> Self {
+        Self {
+            exhausted: false,
+            iterator,
+            sequence,
+        }
+    }
+
     /// Return the number of items evaluated. This value will be one more than
     ///     the highest index available via `MemoIter::recall()`.
     #[inline]
@@ -323,6 +333,27 @@ mod tests {
         assert!(five.is_exhausted());
         assert_eq!(five.evaluated(), 5);
         assert_eq!(five.len(), 5);
+    }
+
+    #[test]
+    fn test_prevec() {
+        let mut five = MemoIter::with_vec(1..5, vec![0]);
+
+        assert!(!five.is_exhausted());
+        assert_eq!(five.len(), 5);
+        assert_eq!(five.evaluated(), 1);
+        assert_eq!(five.recall(0), Some(&0));
+        assert_eq!(five.recall(1), None);
+        assert_eq!(five.get_slice(..), [0]);
+
+        assert_eq!(five.get(10), None);
+
+        assert!(five.is_exhausted());
+        assert_eq!(five.len(), 5);
+        assert_eq!(five.evaluated(), 5);
+        assert_eq!(five.recall(0), Some(&0));
+        assert_eq!(five.recall(1), Some(&1));
+        assert_eq!(five.get_slice(..), [0, 1, 2, 3, 4]);
     }
 
     #[test]

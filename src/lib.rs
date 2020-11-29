@@ -109,7 +109,9 @@ impl<I, T> MemoIter<I, T> where
     }
 
     /// Retrieve, by its index, a value returned by the Iterator. If the value
-    ///     at the index given has not yet been evaluated, it will be.
+    ///     at the index given has not yet been evaluated, it will be. Returns
+    ///     `None` if the internal Iterator terminates before reaching the given
+    ///     index.
     pub fn get(&mut self, idx: usize) -> Option<&T> {
         #[cfg(test)] println!("get({}):", idx);
         self.expand_to_contain(idx);

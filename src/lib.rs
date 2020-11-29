@@ -9,6 +9,12 @@
 //!     999, 998, and so on. If these are stored, they can be retrieved later,
 //!     without needing to be recalculated for their own sake.
 
+use std::{
+    collections::Bound,
+    ops::RangeBounds,
+    slice::SliceIndex,
+};
+
 
 /// A Memoized Iterator. Wraps an Iterator, associating it with a Vector to
 ///     store its returns. Past returns can then be retrieved by index.
@@ -108,6 +114,57 @@ impl<I, T> MemoIter<I, T> where
         #[cfg(test)] println!("get({}):", idx);
         self.expand_to_contain(idx);
         self.sequence.get(idx)
+    }
+
+    /// Retrieve a slice of values returned by the Iterator. If the values in
+    ///     the range in question have not yet been evaluated, they will be.
+    ///
+    /// Retrieving a slice whose end bound has not yet been evaluated will cause
+    ///     all values up to that point to be evaluated. Because an Iterator may
+    ///     be infinite, an *unbounded* slice will, out of caution, **not** do
+    ///     any evaluations, instead being limited to the existing indices in
+    ///     the stored sequence. A convenient side effect of this is that a full
+    ///     range -- that is, `memiter.get_slice(..)` -- will return a full
+    ///     slice of the *stored* sequence, doing no new evaluations.
+    ///
+    /// However, because the final index may not be knowable, this method also
+    ///     includes a check to ensure that it will not panic if given a range
+    ///     with indices outside the final sequence, instead returning an empty
+    ///     slice.
+    pub fn get_slice<R>(&mut self, range: R) -> &[T] where
+        R: RangeBounds<usize> + SliceIndex<[T], Output=[T]>,
+    {
+        let first: usize = match range.start_bound() {
+            Bound::Unbounded => 0,
+            Bound::Included(&i) => i,
+            Bound::Excluded(&i) => i + 1,
+        };
+
+        match range.end_bound() {
+            Bound::Unbounded => {
+                let end: usize = self.sequence.len();
+
+                &self.sequence[first.min(end)..end]
+            }
+            Bound::Included(&i) => {
+                self.expand_to_contain(i);
+                let last: usize = self.sequence.len().saturating_sub(1).min(i);
+
+                if first <= last {
+                    &self.sequence[first..=last]
+                } else {
+                    //  NOTE: Edge case. Prevents `&[0, 1, 2, 3][10..=20]` from
+                    //      being evaluated as `&[3]`.
+                    &[]
+                }
+            }
+            Bound::Excluded(&i) => {
+                self.expand_to_contain(i.saturating_sub(1));
+                let end: usize = self.sequence.len().min(i);
+
+                &self.sequence[first.min(end)..end]
+            }
+        }
     }
 
     /// Return `true` if the internal Iterator has been exhausted and is done
@@ -216,10 +273,15 @@ mod tests {
         assert_eq!(factorial.recall(3), Some(&6));
         println!("{:?}", &factorial);
 
+        assert_eq!(factorial.get_slice(..), [1, 1, 2, 6, 24, 120, 720]);
+        assert_eq!(factorial.get_slice(0..4), [1, 1, 2, 6]);
+        assert_eq!(factorial.get_slice(..=7), [1, 1, 2, 6, 24, 120, 720, 5040]);
+        assert_eq!(factorial.get_slice(5..8), [120, 720, 5040]);
+
         //  Ensure that it maintains its returns, in order.
         let (seq, _) = factorial.consume();
         assert_eq!(
-            seq, [1, 1, 2, 6, 24, 120, 720],
+            seq, [1, 1, 2, 6, 24, 120, 720, 5040],
             "MemoIter does not correctly store its past values.",
         );
     }
@@ -255,6 +317,39 @@ mod tests {
         assert_eq!(five.evaluated(), 4);
         assert_eq!(five.len(), 5);
         assert_eq!(five.get(7), None);
+
+        assert!(five.is_exhausted());
+        assert_eq!(five.evaluated(), 5);
+        assert_eq!(five.len(), 5);
+    }
+
+    #[test]
+    fn test_slice() {
+        let mut five = MemoIter::new(0..5);
+
+        assert!(!five.is_exhausted());
+        assert_eq!(five.evaluated(), 0);
+
+        assert_eq!(five.get_slice(..), []);
+        assert_eq!(five.get_slice(..0), []);
+        assert_eq!(five.get_slice(..=0), [0]);
+        assert_eq!(five.get_slice(0..1), [0]);
+        assert_eq!(five.get_slice(0..), [0]);
+        assert_eq!(five.get_slice(..), [0]);
+
+        assert!(!five.is_exhausted());
+        assert_eq!(five.evaluated(), 1);
+
+        assert_eq!(five.get_slice(10..20), []);
+        assert_eq!(five.get_slice(4..=20), [4]);
+        assert_eq!(five.get_slice(10..=20), []);
+        assert_eq!(five.get_slice(..20), [0, 1, 2, 3, 4]);
+        assert_eq!(five.get_slice(..=9), [0, 1, 2, 3, 4]);
+        assert_eq!(five.get_slice(10..), []);
+        assert_eq!(five.get_slice(..), [0, 1, 2, 3, 4]);
+
+        assert_eq!(five.get_slice(..=usize::MAX), [0, 1, 2, 3, 4]);
+        assert_eq!(five.get_slice(50..40), []);
 
         assert!(five.is_exhausted());
         assert_eq!(five.evaluated(), 5);

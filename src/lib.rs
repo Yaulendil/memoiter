@@ -11,7 +11,7 @@
 
 use std::{
     collections::Bound,
-    ops::RangeBounds,
+    ops::{Deref, RangeBounds},
     slice::SliceIndex,
 };
 
@@ -203,6 +203,19 @@ impl<I, T> MemoIter<I, T> where
 }
 
 
+impl<I, T> Deref for MemoIter<I, T> where
+    I: Iterator<Item=T>,
+{
+    type Target = [T];
+
+    /// A MemoIter dereferences to the slice of its stored values.
+    #[inline]
+    fn deref(&self) -> &Self::Target {
+        &self.sequence[..]
+    }
+}
+
+
 impl<I, T> ExactSizeIterator for MemoIter<I, T> where
     I: ExactSizeIterator + Iterator<Item=T>,
     T: Copy,
@@ -387,5 +400,8 @@ mod tests {
         assert!(five.is_exhausted());
         assert_eq!(five.evaluated(), 5);
         assert_eq!(five.len(), 5);
+
+        assert_eq!(*five, [0, 1, 2, 3, 4]);
+        assert_eq!(five[..], [0, 1, 2, 3, 4]);
     }
 }

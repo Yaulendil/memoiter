@@ -203,6 +203,15 @@ impl<I, T> MemoIter<I, T> where
 }
 
 
+impl<I, T> AsRef<[T]> for MemoIter<I, T> where
+    I: Iterator<Item=T>,
+{
+    fn as_ref(&self) -> &[T] {
+        self.sequence.as_ref()
+    }
+}
+
+
 impl<I, T> Deref for MemoIter<I, T> where
     I: Iterator<Item=T>,
 {

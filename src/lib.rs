@@ -87,7 +87,12 @@ impl<I, T> MemoIter<I, T> where
             sequence,
         }
     }
+}
 
+
+impl<I, T> MemoIter<I, T> where
+    I: Iterator<Item=T>,
+{
     /// Return the number of items evaluated. This value will be one more than
     ///     the highest index available via `MemoIter::recall()`.
     #[inline]

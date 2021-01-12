@@ -11,6 +11,7 @@
 
 use std::{
     collections::Bound,
+    iter::FusedIterator,
     ops::{Deref, RangeBounds},
     slice::SliceIndex,
 };
@@ -254,6 +255,13 @@ impl<F, I, T> From<F> for MemoIter<I, T> where
         Self::new(into.into_iter())
     }
 }
+
+
+/// Implement FusedIterator for MemoIters. The underlying iterator may not
+///     necessarily be fused, but it will be *assumed* as such by the MemoIter;
+///     The stored sequence contains `T`, not `Option<T>`, so we cannot properly
+///     represent gaps.
+impl<I: Iterator<Item=T>, T: Copy> FusedIterator for MemoIter<I, T> {}
 
 
 impl<I, T> Iterator for MemoIter<I, T> where
